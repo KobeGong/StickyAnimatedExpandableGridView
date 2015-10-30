@@ -26,6 +26,8 @@ import com.baidu.stickyheadergridview.ExpandableGridView;
 import com.baidu.stickyheadergridview.R;
 import com.baidu.stickyheadergridview.StickyGridHeadersGridView;
 
+import org.w3c.dom.Text;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -166,28 +168,28 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             return imageView;
         }
 
-
+        class ViewHolder{
+            ImageView image;
+            TextView text;
+        }
 
         public View getChildView(int groupPosition, int childPosition, boolean isLastChild,
                                  View convertView, ViewGroup parent) {
-            Log.d("gonggaofeng","childPosition="+childPosition);
-            AbsListView.LayoutParams lp = new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
-                    (int) (90* Resources.getSystem().getDisplayMetrics().density));
-            FrameLayout layout = new FrameLayout(MainActivity.this);
-            layout.setLayoutParams(lp);
+            ViewHolder holder;
 
-            ImageView imageView = new ImageView(MainActivity.this);
-            imageView.setImageResource(R.drawable.pic);
-            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            layout.addView(imageView, lp);
-            TextView textView = new TextView(MainActivity.this);
-            textView.setLayoutParams(lp);
-            textView.setGravity(Gravity.CENTER);
-            textView.setText(String.valueOf(childPosition));
-            textView.setTextColor(Color.WHITE);
-            textView.setTextSize(16*Resources.getSystem().getDisplayMetrics().density);
-            layout.addView(textView);
-            return layout;
+            if(convertView == null){
+                convertView = LayoutInflater.from(MainActivity.this).inflate(R.layout.item, parent, false);
+                holder = new ViewHolder();
+                holder.image = (ImageView) convertView.findViewById(R.id.image);
+                holder.text = (TextView) convertView.findViewById(R.id.text);
+                convertView.setTag(R.id.id1, holder);
+            }else{
+                holder = (ViewHolder) convertView.getTag(R.id.id1);
+            }
+            holder.text.setText(String.valueOf(childPosition));
+            Log.d("gonggaofeng","childPosition="+childPosition);
+
+            return convertView;
         }
 
         public Object getGroup(int groupPosition) {

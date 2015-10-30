@@ -4,17 +4,17 @@
     android:layout_width="match_parent"
     android:layout_height="90dip">
     <ImageView
+        android:id="@+id/image"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:src="@drawable/pic"
         android:scaleType="fitXY"/>
     <TextView
-        android:id="@android:id/text1"
+        android:id="@+id/text"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
-        android:padding="10dp"
         android:textColor="@android:color/black"
-        tools:text="item text"
-        android:visibility="gone"/>
+        android:textSize="24sp"
+        tools:text="item text"/>
 </FrameLayout>
