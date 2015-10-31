@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.baidu.stickyheadergridview.ExpandableGridView xmlns:android="http://schemas.android.com/apk/res/android"
+<com.baidu.stickyheadergridview.StickyHeaderExpandableGridView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/expandableGridView"
     android:layout_width="match_parent"
@@ -9,4 +9,4 @@
     app:verticalSpacing="2dp"
     app:numColumns="3">
 
-</com.baidu.stickyheadergridview.ExpandableGridView>
+</com.baidu.stickyheadergridview.StickyHeaderExpandableGridView>

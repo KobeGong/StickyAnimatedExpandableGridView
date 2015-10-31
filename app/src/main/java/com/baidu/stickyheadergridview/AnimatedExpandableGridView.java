@@ -15,7 +15,7 @@ import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
 
-public class ExpandableGridView extends ExpandableListView {
+public class AnimatedExpandableGridView extends AnimatedExpandableListView {
 
     /**
      * Disables stretching.
@@ -59,39 +59,39 @@ public class ExpandableGridView extends ExpandableListView {
     private int mRequestedColumnWidth;
     private int mRequestedNumColumns;
 
-    public ExpandableGridView(Context context) {
+    public AnimatedExpandableGridView(Context context) {
         this(context, null);
     }
 
-    public ExpandableGridView(Context context, AttributeSet attrs) {
+    public AnimatedExpandableGridView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public ExpandableGridView(Context context, AttributeSet attrs, int defStyle) {
+    public AnimatedExpandableGridView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
         TypedArray a = context.obtainStyledAttributes(attrs,
-                R.styleable.ExpandableGridView, defStyle, 0);
+                R.styleable.AnimatedExpandableGridView, defStyle, 0);
 
         int hSpacing = a.getDimensionPixelOffset(
-                R.styleable.ExpandableGridView_horizontalSpacing, 0);
+                R.styleable.AnimatedExpandableGridView_horizontalSpacing, 0);
         setHorizontalSpacing(hSpacing);
 
         int vSpacing = a.getDimensionPixelOffset(
-                R.styleable.ExpandableGridView_verticalSpacing, 0);
+                R.styleable.AnimatedExpandableGridView_verticalSpacing, 0);
         setVerticalSpacing(vSpacing);
 
-        int index = a.getInt(R.styleable.ExpandableGridView_stretchMode, STRETCH_COLUMN_WIDTH);
+        int index = a.getInt(R.styleable.AnimatedExpandableGridView_stretchMode, STRETCH_COLUMN_WIDTH);
         if (index >= 0) {
             setStretchMode(index);
         }
 
-        int columnWidth = a.getDimensionPixelOffset(R.styleable.ExpandableGridView_columnWidth, -1);
+        int columnWidth = a.getDimensionPixelOffset(R.styleable.AnimatedExpandableGridView_columnWidth, -1);
         if (columnWidth > 0) {
             setColumnWidth(columnWidth);
         }
 
-        int numColumns = a.getInt(R.styleable.ExpandableGridView_numColumns, 1);
+        int numColumns = a.getInt(R.styleable.AnimatedExpandableGridView_numColumns, 1);
         setNumColumns(numColumns);
 
         a.recycle();
@@ -115,11 +115,28 @@ public class ExpandableGridView extends ExpandableListView {
         });
 
         setLayerType(LAYER_TYPE_HARDWARE, null);
+
+        setOnGroupClickListener(new OnGroupClickListener() {
+            @Override
+            public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
+                if (isGroupExpanded(groupPosition)) {
+                    collapseGroupWithAnimation(groupPosition);
+
+                } else {
+                    expandGroupWithAnimation(groupPosition);
+                }
+                mAdapter.notifyDataSetChanged();
+                return true;
+            }
+        });
     }
+
+    private ExpandableGridInnerAdapter mAdapter;
 
     @Override
     public void setAdapter(ExpandableListAdapter adapter) {
-        super.setAdapter(new ExpandableGridInnerAdapter(adapter));
+        mAdapter = new ExpandableGridInnerAdapter(adapter);
+        super.setAdapter(mAdapter);
     }
 
     /**
@@ -382,7 +399,7 @@ public class ExpandableGridView extends ExpandableListView {
         determineColumns(childWidth);
     }
 
-    private class ExpandableGridInnerAdapter implements ExpandableListAdapter {
+    private class ExpandableGridInnerAdapter extends AnimatedExpandableListAdapter {
 
         private final ExpandableListAdapter mInnerAdapter;
 
@@ -395,8 +412,9 @@ public class ExpandableGridView extends ExpandableListView {
             return mInnerAdapter.getGroupCount();
         }
 
+
         @Override
-        public int getChildrenCount(int groupPosition) {
+        public int getRealChildrenCount(int groupPosition) {
             int realCount = mInnerAdapter.getChildrenCount(groupPosition);
 
             int count;
@@ -444,10 +462,12 @@ public class ExpandableGridView extends ExpandableListView {
             return mInnerAdapter.getGroupView(groupPosition, isExpanded, convertView, parent);
         }
 
+
+
         @SuppressLint("InlinedApi")
         @Override
-        public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-            LinearLayout row = (LinearLayout) (convertView != null ? convertView : new LinearLayout(getContext()));
+        public View getRealChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
+            LinearLayout row = (LinearLayout) (convertView != null && convertView instanceof LinearLayout ? convertView : new LinearLayout(getContext()));
 
             if (row.getLayoutParams() == null) {
                 row.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, AbsListView.ITEM_VIEW_TYPE_IGNORE));

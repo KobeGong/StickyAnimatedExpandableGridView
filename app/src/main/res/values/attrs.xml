@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     
-    <declare-styleable name="ExpandableGridView">
+    <declare-styleable name="AnimatedExpandableGridView">
         <attr name="horizontalSpacing" format="dimension" />
         <attr name="verticalSpacing" format="dimension" />
         <attr name="stretchMode">
