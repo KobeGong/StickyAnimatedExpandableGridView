@@ -341,7 +341,6 @@ public class AnimatedExpandableGridView extends AnimatedExpandableListView {
      * @attr ref android.R.styleable#GridView_numColumns
      * @see #setNumColumns(int)
      */
-    @ViewDebug.ExportedProperty
     public int getNumColumns() {
         return mNumColumns;
     }

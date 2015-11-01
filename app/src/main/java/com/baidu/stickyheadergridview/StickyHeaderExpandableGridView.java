@@ -2,28 +2,28 @@ package com.baidu.stickyheadergridview;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.view.LayoutInflater;
+import android.util.SparseArray;
 import android.view.View;
 import android.widget.AbsListView;
-
+import android.widget.BaseExpandableListAdapter;
+import android.widget.ExpandableListAdapter;
 
 
 /**
  * Created by gonggaofeng on 15/10/31.
  */
-public class StickyHeaderExpandableGridView extends AnimatedExpandableGridView implements AbsListView.OnScrollListener{
+public class StickyHeaderExpandableGridView extends AnimatedExpandableGridView implements AbsListView.OnScrollListener {
 
-
+    private ExpandableListAdapter mAdapter;
 
     public interface OnHeaderUpdateListener {
 
         public void updatePinnedHeader(View headerView, int firstVisibleGroupPos);
     }
 
+    private SparseArray<View> cacheHeaderViews;
 
     private View mHeaderView;
     private int mHeaderWidth;
@@ -46,8 +46,31 @@ public class StickyHeaderExpandableGridView extends AnimatedExpandableGridView i
         super(context, attrs, defStyle);
         setFadingEdgeLength(0);
         setOnScrollListener(this);
-        mHeaderView = LayoutInflater.from(context).inflate(R.layout.header, this, false);
     }
+
+    @Override
+    public void setAdapter(ExpandableListAdapter adapter) {
+        super.setAdapter(adapter);
+        mAdapter = adapter;
+        mHeaderView = adapter.getGroupView(0, false, null, this);
+        boolean isBaseAdapter = adapter instanceof BaseExpandableListAdapter;
+        if (cacheHeaderViews == null) {
+            if (isBaseAdapter) {
+                int typeCount = ((BaseExpandableListAdapter) adapter).getGroupTypeCount();
+                cacheHeaderViews = new SparseArray<>(typeCount);
+            }
+            cacheHeaderViews = new SparseArray<>(1);
+        }
+        if (mHeaderView != null) {
+            int groupType = 0;
+            if (isBaseAdapter) {
+                groupType = ((BaseExpandableListAdapter) adapter).getGroupType(0);
+                cacheHeaderViews.put(groupType, mHeaderView);
+            }
+            cacheHeaderViews.put(groupType, mHeaderView);
+        }
+    }
+
 
     @Override
     public void setOnScrollListener(AbsListView.OnScrollListener l) {
@@ -105,7 +128,10 @@ public class StickyHeaderExpandableGridView extends AnimatedExpandableGridView i
         int pos = firstVisiblePos + 1;
         int firstVisibleGroupPos = getPackedPositionGroup(getExpandableListPosition(firstVisiblePos));
         int group = getPackedPositionGroup(getExpandableListPosition(pos));
-
+        int type = mAdapter instanceof BaseExpandableListAdapter ?
+                ((BaseExpandableListAdapter) mAdapter).getGroupType(firstVisibleGroupPos) : 0;
+        View convertView = cacheHeaderViews == null ? null : cacheHeaderViews.get(type);
+        mHeaderView = mAdapter.getGroupView(firstVisibleGroupPos, false, convertView, this);
         if (group == firstVisibleGroupPos + 1) {
             View view = getChildAt(1);
             if (view == null) {
