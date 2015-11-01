@@ -1,5 +1,5 @@
 
-package com.baidu.stickyheadergridview;
+package com.baidu.stickyheadergridview.gridview;
 
 import android.database.DataSetObserver;
 import android.view.View;

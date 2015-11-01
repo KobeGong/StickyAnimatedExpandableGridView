@@ -11,9 +11,15 @@ import android.view.View;
 import android.view.ViewDebug;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
+import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
+import android.widget.ListAdapter;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 public class AnimatedExpandableGridView extends AnimatedExpandableListView {
 
@@ -96,26 +102,6 @@ public class AnimatedExpandableGridView extends AnimatedExpandableListView {
 
         a.recycle();
 
-        setOnScrollListener(new OnScrollListener() {
-            @Override
-            public void onScrollStateChanged(AbsListView view, int scrollState) {
-                if (scrollState == SCROLL_STATE_IDLE) {
-                    Log.d("gonggaofeng", "\n");
-                    Log.d("gonggaofeng", "\n");
-                    Log.d("gonggaofeng", "#################################################");
-                    Log.d("gonggaofeng", "\n");
-                    Log.d("gonggaofeng", "\n");
-                }
-            }
-
-            @Override
-            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-
-            }
-        });
-
-        setLayerType(LAYER_TYPE_HARDWARE, null);
-
         setOnGroupClickListener(new OnGroupClickListener() {
             @Override
             public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
@@ -129,6 +115,65 @@ public class AnimatedExpandableGridView extends AnimatedExpandableListView {
                 return true;
             }
         });
+        setRecyclerListener(new RecyclerListener() {
+            @Override
+            public void onMovedToScrapHeap(View view) {
+                if (!view.getClass().getName().equals("com.baidu.stickyheadergridview.AnimatedExpandableListView$DummyView"))
+                    return;
+                viewLog(view, "--------");
+            }
+        });
+    }
+
+
+    public void viewLog(View view, String divider) {
+        AbsListView.LayoutParams lp = (LayoutParams) view.getLayoutParams();
+        try {
+            Field viewType = AbsListView.LayoutParams.class.getDeclaredField("viewType");
+            viewType.setAccessible(true);
+            int type = (int) viewType.get(lp);
+
+            Field scrappedFromPosition = AbsListView.LayoutParams.class.getDeclaredField("scrappedFromPosition");
+            scrappedFromPosition.setAccessible(true);
+            int pos = (int) scrappedFromPosition.get(lp);
+
+
+            ListAdapter listAdapter = getAdapter();
+            Class cls = Class.forName("android.widget.ExpandableListConnector");
+            Method method = cls.getDeclaredMethod("getUnflattenedPos", int.class);
+            method.setAccessible(true);
+            Object obj = method.invoke(listAdapter, pos);
+
+
+            Class metaPos = Class.forName("android.widget.ExpandableListConnector$PositionMetadata");
+            Field groupMetadata = metaPos.getDeclaredField("position");
+            groupMetadata.setAccessible(true);
+            Object value = groupMetadata.get(obj);
+
+
+            Class GroupMetadata = Class.forName("android.widget.ExpandableListPosition");
+            Field gPos = GroupMetadata.getDeclaredField("groupPos");
+            gPos.setAccessible(true);
+            int gPosValue = (int) gPos.get(value);
+
+            Field childPos = GroupMetadata.getDeclaredField("childPos");
+            gPos.setAccessible(true);
+            int childPosValue = (int) childPos.get(value);
+
+            GroupInfo info = mAdapter.getGroupInfo(gPosValue);
+
+            Log.d("gonggaofeng", divider+"type:" + type + divider+"pos:" + pos + divider+"groupPos:" + gPosValue + divider+"childPos:" + childPosValue + divider+"animate:" + info.animating);
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        }
     }
 
     private ExpandableGridInnerAdapter mAdapter;
@@ -408,6 +453,24 @@ public class AnimatedExpandableGridView extends AnimatedExpandableListView {
         }
 
         @Override
+        public int getRealChildType(int groupPosition, int childPosition) {
+            if (mInnerAdapter instanceof BaseExpandableListAdapter) {
+                BaseExpandableListAdapter baseAdapter = (BaseExpandableListAdapter) mInnerAdapter;
+                return baseAdapter.getChildType(groupPosition, childPosition);
+            }
+            return 0;
+        }
+
+        @Override
+        public int getRealChildTypeCount() {
+            if (mInnerAdapter instanceof BaseExpandableListAdapter) {
+                BaseExpandableListAdapter baseAdapter = (BaseExpandableListAdapter) mInnerAdapter;
+                return baseAdapter.getChildTypeCount();
+            }
+            return 1;
+        }
+
+        @Override
         public int getGroupCount() {
             return mInnerAdapter.getGroupCount();
         }
@@ -463,14 +526,15 @@ public class AnimatedExpandableGridView extends AnimatedExpandableListView {
         }
 
 
-
         @SuppressLint("InlinedApi")
         @Override
         public View getRealChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-            LinearLayout row = (LinearLayout) (convertView != null && convertView instanceof LinearLayout ? convertView : new LinearLayout(getContext()));
+            if (convertView != null)
+                viewLog(convertView, "########");
+            LinearLayout row = convertView != null ? (LinearLayout) convertView : new LinearLayout(getContext());
 
             if (row.getLayoutParams() == null) {
-                row.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT, AbsListView.ITEM_VIEW_TYPE_IGNORE));
+                row.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
                 row.setPadding(0, mVerticalSpacing / 2, 0, mVerticalSpacing / 2);
                 row.setGravity(Gravity.CENTER_HORIZONTAL);
             }
@@ -482,21 +546,16 @@ public class AnimatedExpandableGridView extends AnimatedExpandableListView {
                 View child;
 
                 View cachedChild = index < row.getChildCount() ? row.getChildAt(index) : null;
-
+                if (cachedChild != null) {
+                    ((ViewGroup) cachedChild.getParent()).removeView(cachedChild);
+                }
                 if (i < groupChildrenCount) {
                     if (cachedChild != null && cachedChild.getTag() == null) {
-                        ((ViewGroup) cachedChild.getParent()).removeView(cachedChild);
-                        cachedChild = null;
+                        cachedChild = null;//It's a empty view,and can not be a convertView
                     }
-                    Log.d("gonggaofeng", "i="+i);
                     child = mInnerAdapter.getChildView(groupPosition, i, i == (groupChildrenCount - 1), cachedChild, parent);
                     child.setTag(mInnerAdapter.getChild(groupPosition, i));
                 } else {
-                    if (cachedChild != null && cachedChild.getTag() != null) {
-                        ((ViewGroup) cachedChild.getParent()).removeView(cachedChild);
-                        cachedChild = null;
-                    }
-
                     child = new View(getContext());
                     child.setTag(null);
                 }
@@ -504,9 +563,9 @@ public class AnimatedExpandableGridView extends AnimatedExpandableListView {
                 if (!(child.getLayoutParams() instanceof LinearLayout.LayoutParams)) {
                     LinearLayout.LayoutParams params;
                     if (child.getLayoutParams() == null) {
-                        params = new LinearLayout.LayoutParams(mColumnWidth, LayoutParams.WRAP_CONTENT, 1);
+                        params = new LinearLayout.LayoutParams(mColumnWidth, mColumnWidth, 1);
                     } else {
-                        params = new LinearLayout.LayoutParams(mColumnWidth, child.getLayoutParams().height, 1);
+                        params = new LinearLayout.LayoutParams(mColumnWidth, mColumnWidth, 1);
                     }
 
                     child.setLayoutParams(params);
@@ -514,16 +573,8 @@ public class AnimatedExpandableGridView extends AnimatedExpandableListView {
 
                 child.setPadding(mHorizontalSpacing / 2, 0, mHorizontalSpacing / 2, 0);
 
-                if (index == row.getChildCount()) {
-                    row.addView(child, index);
-                } else {
-                    child.invalidate();
-                }
+                row.addView(child, index);
             }
-            Log.d("gonggaofeng", "getChildView() called with: " + "groupPosition = ["
-                    + groupPosition + "], childPosition = [" + childPosition + "], " +
-                    "isLastChild = [" + isLastChild + "],rpw.childCount=["+row.getChildCount()+"], index="+index);
-
             return row;
         }
 
@@ -561,16 +612,6 @@ public class AnimatedExpandableGridView extends AnimatedExpandableListView {
         public void onGroupCollapsed(int groupPosition) {
             mInnerAdapter.onGroupCollapsed(groupPosition);
         }
-
-	    /*@Override
-	    public long getCombinedChildId(long groupId, long childId) {
-			return mInnerAdapter.getCombinedChildId(groupId, childId);
-		}
-
-	    @Override
-	    public long getCombinedGroupId(long groupId) {
-			return mInnerAdapter.getCombinedGroupId(groupId);
-		}*/
 
         public long getCombinedChildId(long groupId, long childId) {
             return 0x8000000000000000L | ((groupId & 0x7FFFFFFF) << 32) | (childId & 0xFFFFFFFF);

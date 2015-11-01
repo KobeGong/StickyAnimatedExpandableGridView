@@ -23,7 +23,7 @@ import android.widget.TextView;
 import com.baidu.stickyheadergridview.AnimatedExpandableListView;
 import com.baidu.stickyheadergridview.AnimatedExpandableGridView;
 import com.baidu.stickyheadergridview.R;
-import com.baidu.stickyheadergridview.StickyGridHeadersGridView;
+import com.baidu.stickyheadergridview.gridview.StickyGridHeadersGridView;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener,
         StickyGridHeadersGridView.OnHeaderClickListener, StickyGridHeadersGridView.OnHeaderLongClickListener {
@@ -177,7 +177,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         public View getChildView(int groupPosition, int childPosition, boolean isLastChild,
                                  View convertView, ViewGroup parent) {
             ViewHolder holder;
-
             if(convertView == null){
                 convertView = LayoutInflater.from(MainActivity.this).inflate(R.layout.item, parent, false);
                 holder = new ViewHolder();
@@ -189,10 +188,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }
             holder.text.setText(String.valueOf(childPosition));
             Log.d("gonggaofeng","childPosition="+childPosition);
-
-
-
-
             return convertView;
         }
 
@@ -202,6 +197,26 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         public int getGroupCount() {
             return groups.length;
+        }
+
+        @Override
+        public int getChildType(int groupPosition, int childPosition) {
+            return 0;
+        }
+
+        @Override
+        public int getChildTypeCount() {
+            return 1;
+        }
+
+        @Override
+        public int getGroupType(int groupPosition) {
+            return 0;
+        }
+
+        @Override
+        public int getGroupTypeCount() {
+            return 1;
         }
 
         public long getGroupId(int groupPosition) {
@@ -245,168 +260,4 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         return textView;
     }
 
-
-    class MyAniamtableListAdapter extends AnimatedExpandableListView.AnimatedExpandableListAdapter{
-
-        private String[] groups = { "People Names", "Dog Names", "Cat Names","People Names", "Dog Names", "Cat Names","People Names", "Dog Names", "Cat Names", "Fish Names" };
-        private String[][] children = {
-                { "Arnold", "Barry", "Chuck", "David" },
-                { "Ace", "Bandit", "Cha-Cha", "Deuce" },
-                { "Fluffy", "Snuggles" },
-                { "Arnold", "Barry", "Chuck", "David" },
-                { "Ace", "Bandit", "Cha-Cha", "Deuce" },
-                { "Fluffy", "Snuggles" },
-                { "Arnold", "Barry", "Chuck", "David" },
-                { "Ace", "Bandit", "Cha-Cha", "Deuce" },
-                { "Fluffy", "Snuggles" },
-                { "Goldy", "Bubbles" }
-        };
-
-
-        private int mNumColumns = 3;
-
-        public View getCellView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent){
-            ViewHolder holder;
-            if(convertView == null){
-                convertView = LayoutInflater.from(MainActivity.this).inflate(R.layout.item, parent, false);
-                holder = new ViewHolder();
-                holder.image = (ImageView) convertView.findViewById(R.id.image);
-                holder.text = (TextView) convertView.findViewById(R.id.text);
-                convertView.setTag(R.id.id1, holder);
-            }else{
-                holder = (ViewHolder) convertView.getTag(R.id.id1);
-            }
-            holder.text.setText(String.valueOf(childPosition));
-            Log.d("gonggaofeng","childPosition="+childPosition);
-
-            return convertView;
-        }
-
-
-        @Override
-        public View getRealChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-            LinearLayout row = null;
-            if(convertView != null && convertView instanceof LinearLayout){
-                row = (LinearLayout)convertView;
-            }else{
-                row = new LinearLayout(parent.getContext());
-            }
-            if (row.getLayoutParams() == null) {
-                row.setLayoutParams(new AbsListView.LayoutParams(AbsListView.LayoutParams.MATCH_PARENT,
-                        AbsListView.LayoutParams.WRAP_CONTENT, AbsListView.ITEM_VIEW_TYPE_IGNORE));
-                row.setPadding(0, 10, 0, 10);
-                row.setGravity(Gravity.CENTER_HORIZONTAL);
-            }
-
-            int groupChildrenCount = getCellCount(groupPosition);
-
-            int index = 0;
-            for (int i = mNumColumns * childPosition; i < (mNumColumns * (childPosition + 1)); i++, index++) {
-                View child;
-
-                View cachedChild = index < row.getChildCount() ? row.getChildAt(index) : null;
-
-                if (i < groupChildrenCount) {
-                    if (cachedChild != null && cachedChild.getTag() == null) {
-                        ((ViewGroup) cachedChild.getParent()).removeView(cachedChild);
-                        cachedChild = null;
-                    }
-                    Log.d("gonggaofeng", "i="+i);
-                    child = getCellView(groupPosition, i, i == (groupChildrenCount - 1), cachedChild, parent);
-                    child.setTag(getChild(groupPosition, i));
-                } else {
-                    if (cachedChild != null && cachedChild.getTag() != null) {
-                        ((ViewGroup) cachedChild.getParent()).removeView(cachedChild);
-                        cachedChild = null;
-                    }
-
-                    child = new View(parent.getContext());
-                    child.setTag(null);
-                }
-
-                if (!(child.getLayoutParams() instanceof LinearLayout.LayoutParams)) {
-                    LinearLayout.LayoutParams params;
-                    if (child.getLayoutParams() == null) {
-                        params = new LinearLayout.LayoutParams(240, AbsListView.LayoutParams.WRAP_CONTENT, 1);
-                    } else {
-                        params = new LinearLayout.LayoutParams(240, child.getLayoutParams().height, 1);
-                    }
-
-                    child.setLayoutParams(params);
-                }
-
-                child.setPadding(10, 0, 10, 0);
-
-                if (index == row.getChildCount()) {
-                    row.addView(child, index);
-                } else {
-                    child.invalidate();
-                }
-            }
-
-            return row;
-        }
-
-
-        public int getCellCount(int groupPosition){
-            return children[groupPosition].length;
-        }
-        @Override
-        public int getRealChildrenCount(int groupPosition) {
-
-            int realCount = getCellCount(groupPosition);
-
-            int count = realCount;
-            if (mNumColumns > 0) {
-                int line = realCount / mNumColumns;
-                line = realCount % mNumColumns > 0 ? line + 1 : line;
-                return line;
-            }
-
-            return count;
-        }
-
-        @Override
-        public int getGroupCount() {
-            return groups.length;
-        }
-
-        @Override
-        public Object getGroup(int groupPosition) {
-            return groups[groupPosition];
-        }
-
-        @Override
-        public Object getChild(int groupPosition, int childPosition) {
-            return children[groupPosition][childPosition];
-        }
-
-        @Override
-        public long getGroupId(int groupPosition) {
-            return groupPosition;
-        }
-
-        @Override
-        public long getChildId(int groupPosition, int childPosition) {
-            return childPosition;
-        }
-
-        @Override
-        public boolean hasStableIds() {
-            return true;
-        }
-
-        @Override
-        public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
-            TextView textView = getGenericTextView();
-            textView.setBackgroundColor(Color.GRAY);
-            textView.setText(getGroup(groupPosition).toString() + groupPosition);
-            return textView;
-        }
-
-        @Override
-        public boolean isChildSelectable(int groupPosition, int childPosition) {
-            return false;
-        }
-    }
 }

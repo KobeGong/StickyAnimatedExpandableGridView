@@ -91,7 +91,7 @@ public class AnimatedExpandableListView extends ExpandableListView {
      *    the collapsed group.
      */
     
-    private static final String TAG = "gonggaofeng123";
+    private static final String TAG = "gonggaofeng";
     
     /**
      * The duration of the expand/collapse animations
@@ -161,7 +161,6 @@ public class AnimatedExpandableListView extends ExpandableListView {
         // notifyDataSetChanged so we don't need to)
         adapter.notifyDataSetChanged();
 
-        Log.d(TAG, "expandGroupWithAnimation,groupPos="+groupPos);
         return expandGroup(groupPos);
     }
     
@@ -209,7 +208,6 @@ public class AnimatedExpandableListView extends ExpandableListView {
         
         // Force the listview to refresh it's views
         adapter.notifyDataSetChanged();
-        Log.d(TAG, "collapseGroupWithAnimation,groupPos="+groupPos);
         return isGroupExpanded(groupPos);
     }
 
@@ -220,7 +218,7 @@ public class AnimatedExpandableListView extends ExpandableListView {
     /**
      * Used for holding information regarding the group.
      */
-    private static class GroupInfo {
+    public static class GroupInfo {
         boolean animating = false;
         boolean expanding = false;
         int firstChildPosition;
@@ -258,11 +256,11 @@ public class AnimatedExpandableListView extends ExpandableListView {
         public int getRealChildTypeCount() {
             return 1;
         }
-        
+
         public abstract View getRealChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent);
         public abstract int getRealChildrenCount(int groupPosition);
         
-        private GroupInfo getGroupInfo(int groupPosition) {
+        public GroupInfo getGroupInfo(int groupPosition) {
             GroupInfo info = groupInfo.get(groupPosition);
             if (info == null) {
                 info = new GroupInfo();
@@ -281,6 +279,7 @@ public class AnimatedExpandableListView extends ExpandableListView {
             info.animating = true;
             info.firstChildPosition = firstChildPosition;
             info.expanding = true;
+            Log.d(TAG, "startExpandAnimation set groupPos="+groupPosition+" info.animating = "+info.animating);
         }
         
         private void startCollapseAnimation(int groupPosition, int firstChildPosition) {
@@ -288,11 +287,13 @@ public class AnimatedExpandableListView extends ExpandableListView {
             info.animating = true;
             info.firstChildPosition = firstChildPosition;
             info.expanding = false;
+            Log.d(TAG, "startCollapseAnimation set groupPos="+groupPosition+" info.animating = "+info.animating);
         }
         
         private void stopAnimation(int groupPosition) {
             GroupInfo info = getGroupInfo(groupPosition);
             info.animating = false;
+            Log.d(TAG, "stopAnimation groupPos="+groupPosition+" set info.animating = "+info.animating);
         }
 
         /**
@@ -301,16 +302,19 @@ public class AnimatedExpandableListView extends ExpandableListView {
         @Override
         public final int getChildType(int groupPosition, int childPosition) {
             GroupInfo info = getGroupInfo(groupPosition);
+            int retValue = 0;
             if (info.animating) {
-                // If we are animating this group, then all of it's children 
+                // If we are animating this group, then all of it's children
                 // are going to be dummy views which we will say is type 0.
-                return 0;
+                retValue = 0;
             } else {
                 // If we are not animating this group, then we will add 1 to
                 // the type it has so that no type id conflicts will occur
                 // unless getRealChildType() returns MAX_INT
-                return getRealChildType(groupPosition, childPosition) + 1;
+                retValue = getRealChildType(groupPosition, childPosition) + 1;
             }
+            Log.d(TAG, "groupPos="+groupPosition+",info.animating="+info.animating+", type="+retValue);
+            return retValue;
         }
         
         /**
@@ -328,9 +332,7 @@ public class AnimatedExpandableListView extends ExpandableListView {
         @Override
         public final View getChildView(final int groupPosition, int childPosition, boolean isLastChild, View convertView, final ViewGroup parent) {
             final GroupInfo info = getGroupInfo(groupPosition);
-            Log.d(TAG, "getChildView, groupPosition="+groupPosition+", animating+"+info.animating);
             if (info.animating) {
-                Log.d(TAG, "getChildView() called with: " + "groupPosition = [" + groupPosition + "], childPosition = [" + childPosition + "], isLastChild = [" + isLastChild + "], convertView = [" + convertView + "], parent = [" + parent + "]");
                 // If this group is animating, return the a DummyView...
                 if (convertView == null || !(convertView instanceof DummyView)) {
                     convertView = new DummyView(parent.getContext());
@@ -357,7 +359,6 @@ public class AnimatedExpandableListView extends ExpandableListView {
                     // dummy views as we need to maintain the scroll position
                     // of the ListView after notifyDataSetChanged has been 
                     // called.
-                    Log.d(TAG, "childPosition < info.firstChildPosition");
                     convertView.getLayoutParams().height = 0;
                     return convertView;
                 }
@@ -495,7 +496,6 @@ public class AnimatedExpandableListView extends ExpandableListView {
             }
             return count;
         }
-        
     }
 
     private static class DummyView extends View {

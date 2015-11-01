@@ -14,19 +14,16 @@
  limitations under the License.
  */
 
-package com.baidu.stickyheadergridview;
+package com.baidu.stickyheadergridview.gridview;
 
 import java.util.Arrays;
 import java.util.List;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.Button;
 import android.widget.TextView;
 
 /**
