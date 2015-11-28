@@ -1,4 +1,4 @@
-package com.baidu.stickyheadergridview;
+package com.kobe.library;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.Transformation;
-import android.widget.AbsListView;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
@@ -336,7 +335,7 @@ public class AnimatedExpandableListView extends ExpandableListView {
                 // If this group is animating, return the a DummyView...
                 if (convertView == null || !(convertView instanceof DummyView)) {
                     convertView = new DummyView(parent.getContext());
-                    convertView.setLayoutParams(new AbsListView.LayoutParams(LayoutParams.MATCH_PARENT, 0));
+                    convertView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, 0));
                 }
                 
                 if (childPosition < info.firstChildPosition) {

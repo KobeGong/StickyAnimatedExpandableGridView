@@ -8,7 +8,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:src="@drawable/pic"
-        android:scaleType="fitXY"/>
+        android:scaleType="centerCrop"/>
     <TextView
         android:id="@android:id/text1"
         android:layout_width="match_parent"

@@ -1,25 +1,16 @@
-package com.baidu.stickyheadergridview;
+package com.kobe.library;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.database.DataSetObserver;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewDebug;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListAdapter;
-import android.widget.ExpandableListView;
 import android.widget.LinearLayout;
-import android.widget.ListAdapter;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
 public class AnimatedExpandableGridView extends AnimatedExpandableListView {
 
@@ -64,6 +55,7 @@ public class AnimatedExpandableGridView extends AnimatedExpandableListView {
     private int mColumnWidth;
     private int mRequestedColumnWidth;
     private int mRequestedNumColumns;
+    private float mItemHeightRatio;
 
     public AnimatedExpandableGridView(Context context) {
         this(context, null);
@@ -100,80 +92,10 @@ public class AnimatedExpandableGridView extends AnimatedExpandableListView {
         int numColumns = a.getInt(R.styleable.AnimatedExpandableGridView_numColumns, 1);
         setNumColumns(numColumns);
 
+        float itemHeightRatio = a.getFloat(R.styleable.AnimatedExpandableGridView_itemHeightRatio, -2);
+        setItemHeightRatio(itemHeightRatio);
         a.recycle();
 
-        setOnGroupClickListener(new OnGroupClickListener() {
-            @Override
-            public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
-                if (isGroupExpanded(groupPosition)) {
-                    collapseGroupWithAnimation(groupPosition);
-
-                } else {
-                    expandGroupWithAnimation(groupPosition);
-                }
-                mAdapter.notifyDataSetChanged();
-                return true;
-            }
-        });
-        setRecyclerListener(new RecyclerListener() {
-            @Override
-            public void onMovedToScrapHeap(View view) {
-                if (!view.getClass().getName().equals("com.baidu.stickyheadergridview.AnimatedExpandableListView$DummyView"))
-                    return;
-                viewLog(view, "--------");
-            }
-        });
-    }
-
-
-    public void viewLog(View view, String divider) {
-        AbsListView.LayoutParams lp = (LayoutParams) view.getLayoutParams();
-        try {
-            Field viewType = AbsListView.LayoutParams.class.getDeclaredField("viewType");
-            viewType.setAccessible(true);
-            int type = (int) viewType.get(lp);
-
-            Field scrappedFromPosition = AbsListView.LayoutParams.class.getDeclaredField("scrappedFromPosition");
-            scrappedFromPosition.setAccessible(true);
-            int pos = (int) scrappedFromPosition.get(lp);
-
-
-            ListAdapter listAdapter = getAdapter();
-            Class cls = Class.forName("android.widget.ExpandableListConnector");
-            Method method = cls.getDeclaredMethod("getUnflattenedPos", int.class);
-            method.setAccessible(true);
-            Object obj = method.invoke(listAdapter, pos);
-
-
-            Class metaPos = Class.forName("android.widget.ExpandableListConnector$PositionMetadata");
-            Field groupMetadata = metaPos.getDeclaredField("position");
-            groupMetadata.setAccessible(true);
-            Object value = groupMetadata.get(obj);
-
-
-            Class GroupMetadata = Class.forName("android.widget.ExpandableListPosition");
-            Field gPos = GroupMetadata.getDeclaredField("groupPos");
-            gPos.setAccessible(true);
-            int gPosValue = (int) gPos.get(value);
-
-            Field childPos = GroupMetadata.getDeclaredField("childPos");
-            gPos.setAccessible(true);
-            int childPosValue = (int) childPos.get(value);
-
-            GroupInfo info = mAdapter.getGroupInfo(gPosValue);
-
-            Log.d("gonggaofeng", divider+"type:" + type + divider+"pos:" + pos + divider+"groupPos:" + gPosValue + divider+"childPos:" + childPosValue + divider+"animate:" + info.animating);
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        }
     }
 
     private ExpandableGridInnerAdapter mAdapter;
@@ -330,6 +252,13 @@ public class AnimatedExpandableGridView extends AnimatedExpandableListView {
     public void setNumColumns(int numColumns) {
         if (numColumns != mRequestedNumColumns) {
             mRequestedNumColumns = numColumns;
+            requestLayout();
+        }
+    }
+
+    public void setItemHeightRatio(float itemHeightRatio) {
+        if (itemHeightRatio != mItemHeightRatio) {
+            mItemHeightRatio = itemHeightRatio;
             requestLayout();
         }
     }
@@ -528,9 +457,8 @@ public class AnimatedExpandableGridView extends AnimatedExpandableListView {
         @SuppressLint("InlinedApi")
         @Override
         public View getRealChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-            if (convertView != null)
-                viewLog(convertView, "########");
-            LinearLayout row = convertView != null ? (LinearLayout) convertView : new LinearLayout(getContext());
+            LinearLayout row = convertView != null && convertView instanceof LinearLayout ?
+                    (LinearLayout) convertView : new LinearLayout(getContext());
 
             if (row.getLayoutParams() == null) {
                 row.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
@@ -553,19 +481,21 @@ public class AnimatedExpandableGridView extends AnimatedExpandableListView {
                         cachedChild = null;//It's a empty view,and can not be a convertView
                     }
                     child = mInnerAdapter.getChildView(groupPosition, i, i == (groupChildrenCount - 1), cachedChild, parent);
-                    child.setTag(mInnerAdapter.getChild(groupPosition, i));
+                    child.setTag(R.id.id1, mInnerAdapter.getChild(groupPosition, i));
                 } else {
                     child = new View(getContext());
-                    child.setTag(null);
+                    child.setTag(R.id.id1, null);
                 }
 
                 if (!(child.getLayoutParams() instanceof LinearLayout.LayoutParams)) {
                     LinearLayout.LayoutParams params;
-                    if (child.getLayoutParams() == null) {
-                        params = new LinearLayout.LayoutParams(mColumnWidth, mColumnWidth, 1);
+                    int height;
+                    if (mItemHeightRatio > 0) {
+                        height = (int) (mColumnWidth * mItemHeightRatio);
                     } else {
-                        params = new LinearLayout.LayoutParams(mColumnWidth, mColumnWidth, 1);
+                        height = LinearLayout.LayoutParams.WRAP_CONTENT;
                     }
+                    params = new LinearLayout.LayoutParams(mColumnWidth, height, 1);
 
                     child.setLayoutParams(params);
                 }
@@ -584,11 +514,13 @@ public class AnimatedExpandableGridView extends AnimatedExpandableListView {
 
         @Override
         public void registerDataSetObserver(DataSetObserver observer) {
+            super.registerDataSetObserver(observer);
             mInnerAdapter.registerDataSetObserver(observer);
         }
 
         @Override
         public void unregisterDataSetObserver(DataSetObserver observer) {
+            super.unregisterDataSetObserver(observer);
             mInnerAdapter.unregisterDataSetObserver(observer);
         }
 

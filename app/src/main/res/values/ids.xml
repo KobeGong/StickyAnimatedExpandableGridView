@@ -2,4 +2,6 @@
 <resources>
     <item name="id1" type="id" />
     <item name="id2" type="id" />
+    <item name="load_mark_loading" type="id" />
+    <item name="load_mark_url" type="id" />
 </resources>

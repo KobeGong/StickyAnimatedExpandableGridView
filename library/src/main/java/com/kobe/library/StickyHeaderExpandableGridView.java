@@ -1,8 +1,9 @@
-package com.baidu.stickyheadergridview;
+package com.kobe.library;
 
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.view.View;
@@ -28,7 +29,7 @@ public class StickyHeaderExpandableGridView extends AnimatedExpandableGridView i
     private View mHeaderView;
     private int mHeaderWidth;
     private int mHeaderHeight;
-    private AbsListView.OnScrollListener mScrollListener;
+    private OnScrollListener mScrollListener;
     private OnHeaderUpdateListener mHeaderUpdateListener;
 
     private static final String TAG = StickyHeaderExpandableGridView.class.getSimpleName();
@@ -73,7 +74,7 @@ public class StickyHeaderExpandableGridView extends AnimatedExpandableGridView i
 
 
     @Override
-    public void setOnScrollListener(AbsListView.OnScrollListener l) {
+    public void setOnScrollListener(OnScrollListener l) {
         if (l != this) {
             mScrollListener = l;
         } else {
@@ -114,6 +115,7 @@ public class StickyHeaderExpandableGridView extends AnimatedExpandableGridView i
             drawChild(canvas, mHeaderView, getDrawingTime());
         }
     }
+
 
     public void requestRefreshHeader() {
         refreshHeader();
@@ -159,7 +161,7 @@ public class StickyHeaderExpandableGridView extends AnimatedExpandableGridView i
     }
 
     @Override
-    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+    public void onScroll(@NonNull AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
         if (totalItemCount > 0) {
             refreshHeader();
         }
