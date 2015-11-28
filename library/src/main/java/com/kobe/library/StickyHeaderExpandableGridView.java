@@ -6,6 +6,7 @@ import android.graphics.Rect;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.SparseArray;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AbsListView;
 import android.widget.BaseExpandableListAdapter;
@@ -17,18 +18,18 @@ import android.widget.ExpandableListAdapter;
  */
 public class StickyHeaderExpandableGridView extends AnimatedExpandableGridView implements AbsListView.OnScrollListener {
 
-    private ExpandableListAdapter mAdapter;
-
     public interface OnHeaderUpdateListener {
 
+
         public void updatePinnedHeader(View headerView, int firstVisibleGroupPos);
+
     }
-
     private SparseArray<View> cacheHeaderViews;
-
+    private ExpandableListAdapter mAdapter;
     private View mHeaderView;
     private int mHeaderWidth;
     private int mHeaderHeight;
+    private boolean mHeaderPressed;
     private OnScrollListener mScrollListener;
     private OnHeaderUpdateListener mHeaderUpdateListener;
 
@@ -36,7 +37,6 @@ public class StickyHeaderExpandableGridView extends AnimatedExpandableGridView i
 
     public StickyHeaderExpandableGridView(Context context) {
         this(context, null);
-
     }
 
     public StickyHeaderExpandableGridView(Context context, AttributeSet attrs) {
@@ -47,6 +47,83 @@ public class StickyHeaderExpandableGridView extends AnimatedExpandableGridView i
         super(context, attrs, defStyle);
         setFadingEdgeLength(0);
         setOnScrollListener(this);
+    }
+
+    @Override
+    public boolean onInterceptHoverEvent(MotionEvent event) {
+        boolean superResult =  super.onInterceptHoverEvent(event);
+        if(superResult){
+            return superResult;
+        }
+        if(pointInView(event, mHeaderView)){
+            mHeaderPressed = true;
+        }
+        return mHeaderPressed;
+    }
+
+    private Runnable performHeaderClick = new Runnable() {
+        @Override
+        public void run() {
+            int firstChildPos = getFirstVisiblePosition();
+            int groupPos = getPackedPositionGroup(getExpandableListPosition(firstChildPos));
+            int groupFlatPos = getFlatListPosition(getPackedPositionForGroup(groupPos));
+            performItemClick(mHeaderView, groupFlatPos, mAdapter.getGroupId(groupPos));
+        }
+    };
+
+    @Override
+    public boolean onTouchEvent(MotionEvent ev) {
+        int action = ev.getAction();
+        switch (action){
+            case MotionEvent.ACTION_DOWN:
+                if(pointInView(ev, mHeaderView)){
+                    mHeaderPressed = true;
+                    boolean consumed = mHeaderView.dispatchTouchEvent(ev);
+                    if(!consumed){
+                    }
+                    invalidate(0, 0, mHeaderWidth, mHeaderHeight);
+                    return true;
+                }
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if(pointInView(ev, mHeaderView)){
+                    boolean consumed = mHeaderView.dispatchTouchEvent(ev);
+                    if(!consumed){
+                    }
+                    invalidate(0, 0, mHeaderWidth, mHeaderHeight);
+                    return true;
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                if(mHeaderPressed){
+                    mHeaderPressed = false;
+                    boolean consumed = mHeaderView.dispatchTouchEvent(ev);
+                    if(!consumed){
+                        post(performHeaderClick);
+                    }
+                    invalidate(0, 0, mHeaderWidth, mHeaderHeight);
+                    return true;
+                }
+                break;
+            case MotionEvent.ACTION_CANCEL:
+                if(mHeaderPressed){
+                    mHeaderPressed = false;
+                    boolean consumed = mHeaderView.dispatchTouchEvent(ev);
+                    if(consumed){
+                    }
+                    invalidate(0, 0, mHeaderWidth, mHeaderHeight);
+                    return true;
+                }
+                break;
+        }
+        return super.onTouchEvent(ev);
+    }
+
+    private boolean pointInView(MotionEvent event, View view){
+        int localX = (int) event.getX();
+        int localY = (int) event.getY();
+        return localX >= view.getLeft() && localX < view.getRight()
+                && localY >= view.getTop() && localY < view.getBottom();
     }
 
     @Override
