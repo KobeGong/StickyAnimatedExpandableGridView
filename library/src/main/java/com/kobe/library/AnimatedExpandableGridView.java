@@ -57,6 +57,8 @@ public class AnimatedExpandableGridView extends AnimatedExpandableListView {
     private int mRequestedNumColumns;
     private float mItemHeightRatio;
 
+    private OnChildClickListener mOnChildClickListener;
+
     public AnimatedExpandableGridView(Context context) {
         this(context, null);
     }
@@ -104,6 +106,11 @@ public class AnimatedExpandableGridView extends AnimatedExpandableListView {
     public void setAdapter(ExpandableListAdapter adapter) {
         mAdapter = new ExpandableGridInnerAdapter(adapter);
         super.setAdapter(mAdapter);
+    }
+
+    @Override
+    public void setOnChildClickListener(OnChildClickListener onChildClickListener) {
+        this.mOnChildClickListener = onChildClickListener;
     }
 
     /**
@@ -440,7 +447,7 @@ public class AnimatedExpandableGridView extends AnimatedExpandableListView {
 
         @Override
         public long getChildId(int groupPosition, int childPosition) {
-            return 0;
+            return mInnerAdapter.getChildId(groupPosition,childPosition);
         }
 
         @Override
@@ -502,10 +509,27 @@ public class AnimatedExpandableGridView extends AnimatedExpandableListView {
 
                 child.setPadding(mHorizontalSpacing / 2, 0, mHorizontalSpacing / 2, 0);
 
+                if (mOnChildClickListener != null) {
+                    child.setTag(R.id.id_group, groupPosition);
+                    child.setTag(R.id.id_child, i);
+                    child.setTag(R.id.id_childId, getChildId(groupPosition, i));
+                    child.setOnClickListener(mItemClickListener);
+                }
                 row.addView(child, index);
             }
             return row;
         }
+
+        private OnClickListener mItemClickListener = new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int groupIndex = (Integer) v.getTag(R.id.id_group);
+                int childIndex = (Integer) v.getTag(R.id.id_child);
+                Object mId = v.getTag(R.id.id_childId);
+                long childId = mId != null ? Long.parseLong(mId.toString()) : 0;
+                mOnChildClickListener.onChildClick(AnimatedExpandableGridView.this, v, groupIndex, childIndex, childId);
+            }
+        };
 
         @Override
         public boolean isChildSelectable(int groupPosition, int childPosition) {
