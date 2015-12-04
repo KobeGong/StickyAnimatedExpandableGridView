@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <item name="id1" type="id" />
+    <item name="id_group" type="id"/>
+    <item name="id_child" type="id" />
+    <item name="id_childId" type="id"/>
 </resources>
