@@ -7,6 +7,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +23,7 @@ import com.kobe.library.AnimatedExpandableGridView;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener{
 
+    public static final String TAG = "gonggaofeng";
 
     private ViewPager mViewPager;
     private TabLayout mTabLayout;
@@ -83,6 +85,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         gridView.expandGroupWithAnimation(groupPosition);
                     }
                     return true;
+                }
+            });
+            gridView.setOnChildClickListener(new ExpandableListView.OnChildClickListener() {
+                @Override
+                public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
+                    Log.d(TAG, "onChildClick() groupPosition = [" + groupPosition + "], childPosition = [" + childPosition + "]");
+                    return false;
                 }
             });
 
